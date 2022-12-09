@@ -1,0 +1,66 @@
+version: "3.9"
+services:
+  mysqlService:
+    image: mysql:latest
+    container_name: mysqlService
+    networks:
+      - mysql-net
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: customer
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+  authentication-service:
+      image: authentication_image
+      container_name: authentication-service
+      build: UserAuthenticationService
+      restart: always
+      networks:
+        - mysql-net
+      ports:
+        - "8085:8085"
+      depends_on:
+        - mysqlService
+        - api-gateway
+  mongoService:
+    image: mongo:latest
+    container_name: mongoService
+    networks:
+      - mysql-net
+    ports:
+      - "27017:27017"
+  track-service:
+    image: track_service
+    container_name: track-service
+    build: UserTrackService
+    restart: always
+    networks:
+      - mysql-net
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mongoService
+      - api-gateway
+  api-gateway:
+    image: api_service
+    container_name: api-gateway
+    build: ProductApiService
+    networks:
+      - mysql-net
+    ports:
+      - "9000:9000"
+  eureka-server:
+    image: eureka_server
+    container_name: eureka-server
+    build: EurekaServer
+    networks:
+      - mysql-net
+    ports:
+      - "8761:8761"
+networks:
+  mysql-net:
+    driver: bridge
+
